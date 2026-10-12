@@ -312,3 +312,26 @@ def user_product_count(user_id: int, product_id: int, db: Session = Depends(get_
 def user_statistics(user_id: int, db: Session = Depends(get_db)):
     user_or_404(db, user_id)
     return get_user_statistics(db, user_id)
+
+@app.post('/products/{product_id}/reviews/', response_model=ReviewRead)
+def review_create(product_id: int, data: ReviewCreate, db: Session = Depends(get_db)):
+    product_or_404(db, product_id)
+    user_or_404(db, data.user_id)
+    return create_review(db, product_id, data)
+
+@app.get('/products/{product_id}/reviews/', response_model=list[ReviewRead])
+def product_reviews(product_id: int, db: Session = Depends(get_db)):
+    product_or_404(db, product_id)
+    return get_product_reviews(db, product_id)
+
+@app.get('/products/{product_id}/rating/')
+def product_rating(product_id: int, db: Session = Depends(get_db)):
+    product_or_404(db, product_id)
+    return get_product_rating(db, product_id)
+
+@app.delete('/reviews/{review_id}', response_model=ReviewRead)
+def review_delete(review_id: int, db: Session = Depends(get_db)):
+    review = delete_review(db, review_id)
+    if not review:
+        raise HTTPException(status_code=404, detail='Review not found')
+    return review

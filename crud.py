@@ -400,3 +400,32 @@ def get_user_statistics(db: Session, user_id: int):
         'favorites_count': db.query(Favorite).filter(Favorite.user_id == user_id).count(),
         'reviews_count': db.query(Review).filter(Review.user_id == user_id).count()
     }
+
+def create_review(db: Session, product_id: int, data):
+    review = Review(product_id=product_id, **data.model_dump())
+    db.add(review)
+    db.commit()
+    db.refresh(review)
+    return review
+
+def get_product_reviews(db: Session, product_id: int):
+    return db.query(Review).filter(Review.product_id == product_id).order_by(Review.created_at.desc()).all()
+
+def get_review(db: Session, pk: int):
+    return db.query(Review).filter(Review.id == pk).first()
+
+def delete_review(db: Session, pk: int):
+    review = get_review(db, pk)
+    if not review:
+        return None
+    db.delete(review)
+    db.commit()
+    return review
+
+def get_product_rating(db: Session, product_id: int):
+    row = db.query(func.avg(Review.rating), func.count(Review.id)).filter(Review.product_id == product_id).first()
+    return {
+        'product_id': product_id,
+        'average_rating': round(row[0], 2) if row[0] else 0,
+        'reviews_count': row[1]
+    }
