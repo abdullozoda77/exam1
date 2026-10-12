@@ -177,3 +177,15 @@ def add_to_cart(db: Session, data):
     db.commit()
     db.refresh(item)
     return item
+
+def get_cart_items(db: Session, user_id: int):
+    return db.query(CartItem).filter(CartItem.user_id == user_id).all()
+
+def get_cart(db: Session, user_id: int):
+    items = get_cart_items(db, user_id)
+    return {
+        'user_id': user_id,
+        'items': items,
+        'total_quantity': sum(item.quantity for item in items),
+        'total_price': round(sum(item.subtotal for item in items), 2)
+    }

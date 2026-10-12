@@ -164,3 +164,13 @@ def cart_add(data: CartAdd, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=f'Only {product.stock} of «{product.name}» in stock, you already have {in_cart} in the cart')
 
     return add_to_cart(db, data)
+
+@app.get('/cart/{user_id}', response_model=CartRead)
+def cart_detail(user_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    return get_cart(db, user_id)
+
+@app.get('/users/{user_id}/cart/', response_model=CartRead)
+def user_cart(user_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    return get_cart(db, user_id)
