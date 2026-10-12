@@ -443,3 +443,25 @@ def get_products_by_rating(db: Session, high: bool = True):
         {'id': product.id, 'name': product.name, 'price': product.price, 'average_rating': round(avg, 2)}
         for product, avg in query.all()
     ]
+
+def get_favorite(db: Session, user_id: int, product_id: int):
+    return db.query(Favorite).filter(
+        Favorite.user_id == user_id,
+        Favorite.product_id == product_id
+    ).first()
+
+def add_favorite(db: Session, data):
+    favorite = Favorite(**data.model_dump())
+    db.add(favorite)
+    db.commit()
+    db.refresh(favorite)
+    return favorite
+
+def get_user_favorites(db: Session, user_id: int):
+    return db.query(Favorite).filter(Favorite.user_id == user_id).all()
+
+def delete_favorite(db: Session, favorite):
+    favorite.product
+    db.delete(favorite)
+    db.commit()
+    return favorite

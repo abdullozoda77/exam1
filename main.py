@@ -343,3 +343,31 @@ def products_high_rating(db: Session = Depends(get_db)):
 @app.get('/products/rating/low/')
 def products_low_rating(db: Session = Depends(get_db)):
     return get_products_by_rating(db, high=False)
+
+@app.post('/favorites/', response_model=FavoriteRead)
+def favorite_add(data: FavoriteCreate, db: Session = Depends(get_db)):
+    user_or_404(db, data.user_id)
+    product_or_404(db, data.product_id)
+    if get_favorite(db, data.user_id, data.product_id):
+        raise HTTPException(status_code=400, detail='This product is already in favorites')
+    return add_favorite(db, data)
+
+@app.get('/favorites/{user_id}', response_model=list[FavoriteRead])
+def user_favorites(user_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    return get_user_favorites(db, user_id)
+
+@app.get('/favorites/{user_id}/{product_id}')
+def favorite_check(user_id: int, product_id: int, db: Session = Depends(get_db)):
+    return {
+        'user_id': user_id,
+        'product_id': product_id,
+        'is_favorite': get_favorite(db, user_id, product_id) is not None
+    }
+
+@app.delete('/favorites/{user_id}/{product_id}', response_model=FavoriteRead)
+def favorite_delete(user_id: int, product_id: int, db: Session = Depends(get_db)):
+    favorite = get_favorite(db, user_id, product_id)
+    if not favorite:
+        raise HTTPException(status_code=404, detail='This product is not in favorites')
+    return delete_favorite(db, favorite)
