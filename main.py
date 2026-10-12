@@ -174,3 +174,25 @@ def cart_detail(user_id: int, db: Session = Depends(get_db)):
 def user_cart(user_id: int, db: Session = Depends(get_db)):
     user_or_404(db, user_id)
     return get_cart(db, user_id)
+
+@app.put('/cart/items/{cart_item_id}', response_model=CartItemRead)
+def cart_item_update(cart_item_id: int, data: CartItemUpdate, db: Session = Depends(get_db)):
+    item = get_cart_item_by_id(db, cart_item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail='Cart item not found')
+    if data.quantity > item.product.stock:
+        raise HTTPException(status_code=400, detail=f'Only {item.product.stock} of «{item.product.name}» in stock')
+    return update_cart_item(db, cart_item_id, data.quantity)
+
+@app.delete('/cart/items/{cart_item_id}', response_model=CartItemRead)
+def cart_item_delete(cart_item_id: int, db: Session = Depends(get_db)):
+    item = delete_cart_item(db, cart_item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail='Cart item not found')
+    return item
+
+@app.delete('/cart/clear/{user_id}')
+def cart_clear(user_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    count = clear_cart(db, user_id)
+    return {'user_id': user_id, 'deleted_items': count}

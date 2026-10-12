@@ -189,3 +189,29 @@ def get_cart(db: Session, user_id: int):
         'total_quantity': sum(item.quantity for item in items),
         'total_price': round(sum(item.subtotal for item in items), 2)
     }
+
+def get_cart_item_by_id(db: Session, pk: int):
+    return db.query(CartItem).filter(CartItem.id == pk).first()
+
+def update_cart_item(db: Session, pk: int, quantity: int):
+    item = get_cart_item_by_id(db, pk)
+    if not item:
+        return None
+    item.quantity = quantity
+    db.commit()
+    db.refresh(item)
+    return item
+
+def delete_cart_item(db: Session, pk: int):
+    item = get_cart_item_by_id(db, pk)
+    if not item:
+        return None
+    item.product
+    db.delete(item)
+    db.commit()
+    return item
+
+def clear_cart(db: Session, user_id: int):
+    count = db.query(CartItem).filter(CartItem.user_id == user_id).delete()
+    db.commit()
+    return count
