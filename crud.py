@@ -324,3 +324,58 @@ def delete_user(db: Session, pk: int):
     db.delete(user)
     db.commit()
     return user
+
+def get_user_purchases(db: Session, user_id: int):
+    return db.query(Order).filter(
+        Order.user_id == user_id,
+        Order.status != 'cancelled'
+    ).order_by(Order.created_at.desc()).all()
+
+def get_last_order(db: Session, user_id: int):
+    return db.query(Order).filter(Order.user_id == user_id).order_by(Order.created_at.desc()).first()
+
+def get_most_expensive_order(db: Session, user_id: int):
+    return db.query(Order).filter(
+        Order.user_id == user_id,
+        Order.status != 'cancelled'
+    ).order_by(Order.total_price.desc()).first()
+
+def get_user_total_spent(db: Session, user_id: int):
+    total = db.query(func.sum(Order.total_price)).filter(
+        Order.user_id == user_id,
+        Order.status != 'cancelled'
+    ).scalar()
+    return round(total or 0, 2)
+
+def get_user_purchased_products(db: Session, user_id: int):
+    rows = db.query(
+        OrderItem.product_id,
+        OrderItem.product_name,
+        func.sum(OrderItem.quantity),
+        func.count(OrderItem.id)
+    ).join(Order, OrderItem.order_id == Order.id).filter(
+        Order.user_id == user_id,
+        Order.status != 'cancelled'
+    ).group_by(OrderItem.product_id, OrderItem.product_name).all()
+
+    return [
+        {'product_id': r[0], 'product_name': r[1], 'total_quantity': r[2], 'times_bought': r[3]}
+        for r in rows
+    ]
+
+def get_user_product_count(db: Session, user_id: int, product_id: int):
+    rows = db.query(
+        func.count(OrderItem.id),
+        func.sum(OrderItem.quantity)
+    ).join(Order, OrderItem.order_id == Order.id).filter(
+        Order.user_id == user_id,
+        Order.status != 'cancelled',
+        OrderItem.product_id == product_id
+    ).first()
+
+    return {
+        'user_id': user_id,
+        'product_id': product_id,
+        'times_bought': rows[0] or 0,
+        'total_quantity': rows[1] or 0
+    }

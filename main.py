@@ -261,3 +261,49 @@ def user_delete(user_id: int, db: Session = Depends(get_db)):
     if user_has_orders(db, user_id):
         raise HTTPException(status_code=400, detail='This user has orders, it can not be deleted')
     return delete_user(db, user_id)
+
+@app.get('/users/{user_id}/orders/', response_model=list[OrderRead])
+def user_orders(user_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    return get_orders(db, user_id=user_id, limit=1000)
+
+@app.get('/users/{user_id}/purchases/', response_model=list[OrderRead])
+def user_purchases(user_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    return get_user_purchases(db, user_id)
+
+@app.get('/users/{user_id}/orders/last/', response_model=OrderRead)
+def user_last_order(user_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    order = get_last_order(db, user_id)
+    if not order:
+        raise HTTPException(status_code=404, detail='This user has no orders')
+    return order
+
+@app.get('/users/{user_id}/orders/most-expensive/', response_model=OrderRead)
+def user_most_expensive_order(user_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    order = get_most_expensive_order(db, user_id)
+    if not order:
+        raise HTTPException(status_code=404, detail='This user has no orders')
+    return order
+
+@app.get('/users/{user_id}/total-spent/')
+def user_total_spent(user_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    return {'user_id': user_id, 'total_spent': get_user_total_spent(db, user_id)}
+
+@app.get('/users/{user_id}/orders-count/')
+def user_orders_count(user_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    return {'user_id': user_id, 'orders_count': len(get_user_purchases(db, user_id))}
+
+@app.get('/users/{user_id}/products/')
+def user_products(user_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    return get_user_purchased_products(db, user_id)
+
+@app.get('/users/{user_id}/products/{product_id}/count/')
+def user_product_count(user_id: int, product_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    return get_user_product_count(db, user_id, product_id)
