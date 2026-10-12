@@ -237,3 +237,38 @@ def create_order(db: Session, user_id: int):
     db.commit()
     db.refresh(order)
     return order
+
+def get_orders(
+    db: Session,
+    status: str | None = None,
+    user_id: int | None = None,
+    sort_by: str = 'created_at',
+    order: str = 'desc',
+    skip: int = 0,
+    limit: int = 10
+):
+    query = db.query(Order)
+
+    if status is not None:
+        query = query.filter(Order.status == status)
+
+    if user_id is not None:
+        query = query.filter(Order.user_id == user_id)
+
+    sort_columns = {
+        'id': Order.id,
+        'created_at': Order.created_at,
+        'total_price': Order.total_price
+    }
+
+    column = sort_columns.get(sort_by, Order.created_at)
+
+    if order == 'desc':
+        query = query.order_by(column.desc())
+    else:
+        query = query.order_by(column.asc())
+
+    return query.offset(skip).limit(limit).all()
+
+def get_order(db: Session, pk: int):
+    return db.query(Order).filter(Order.id == pk).first()

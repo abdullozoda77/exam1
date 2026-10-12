@@ -210,3 +210,26 @@ def order_create(data: OrderCreate, db: Session = Depends(get_db)):
             raise HTTPException(status_code=400, detail=f'Only {item.product.stock} of «{item.product.name}» in stock')
 
     return create_order(db, data.user_id)
+
+def order_or_404(db, order_id):
+    order = get_order(db, order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail=f'Order #{order_id} not found')
+    return order
+
+@app.get('/orders/', response_model=list[OrderRead])
+def orders_list(
+    status: Literal['new', 'paid', 'cancelled'] | None = None,
+    user_id: int | None = Query(None, ge=1),
+    sort_by: Literal['id', 'created_at', 'total_price'] = 'created_at',
+    order: Literal['asc', 'desc'] = 'desc',
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    skip = (page - 1) * page_size
+    return get_orders(db, status, user_id, sort_by, order, skip, page_size)
+
+@app.get('/orders/{order_id}', response_model=OrderRead)
+def order_detail(order_id: int, db: Session = Depends(get_db)):
+    return order_or_404(db, order_id)
