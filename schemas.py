@@ -65,3 +65,48 @@ class ProductShort(BaseModel):
     name: str
     price: float
     stock: int
+
+class CartAdd(BaseModel):
+    user_id: int
+    product_id: int
+    quantity: int = Field(default=1, ge=1)
+
+class CartItemUpdate(BaseModel):
+    quantity: int = Field(ge=1)
+
+class CartItemRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    product: ProductShort
+    quantity: int
+    subtotal: float
+
+class CartRead(BaseModel):
+    user_id: int
+    items: list[CartItemRead]
+    total_quantity: int
+    total_price: float
+
+class OrderCreate(BaseModel):
+    user_id: int
+
+class OrderStatusUpdate(BaseModel):
+    status: Literal['new', 'paid', 'cancelled']
+
+class OrderItemRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    product_id: int | None
+    product_name: str
+    price: float
+    quantity: int
+    subtotal: float
+
+class OrderRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    status: str
+    total_price: float
+    created_at: datetime
+    items: list[OrderItemRead]
