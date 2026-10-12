@@ -272,3 +272,21 @@ def get_orders(
 
 def get_order(db: Session, pk: int):
     return db.query(Order).filter(Order.id == pk).first()
+
+def cancel_order(db: Session, order):
+    for item in order.items:
+        product = get_product(db, item.product_id) if item.product_id else None
+        if product:
+            product.stock += item.quantity
+    order.status = 'cancelled'
+    db.commit()
+    db.refresh(order)
+    return order
+
+def update_order_status(db: Session, order, status: str):
+    if status == 'cancelled':
+        return cancel_order(db, order)
+    order.status = status
+    db.commit()
+    db.refresh(order)
+    return order

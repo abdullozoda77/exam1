@@ -233,3 +233,17 @@ def orders_list(
 @app.get('/orders/{order_id}', response_model=OrderRead)
 def order_detail(order_id: int, db: Session = Depends(get_db)):
     return order_or_404(db, order_id)
+
+@app.put('/orders/{order_id}/status/', response_model=OrderRead)
+def order_status(order_id: int, data: OrderStatusUpdate, db: Session = Depends(get_db)):
+    order = order_or_404(db, order_id)
+    if order.status == 'cancelled':
+        raise HTTPException(status_code=400, detail='This order is cancelled, its status can not be changed')
+    return update_order_status(db, order, data.status)
+
+@app.post('/orders/{order_id}/cancel/', response_model=OrderRead)
+def order_cancel(order_id: int, db: Session = Depends(get_db)):
+    order = order_or_404(db, order_id)
+    if order.status == 'cancelled':
+        raise HTTPException(status_code=400, detail='This order is already cancelled')
+    return cancel_order(db, order)
