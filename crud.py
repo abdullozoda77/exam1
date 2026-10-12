@@ -142,3 +142,21 @@ def get_products(
         query = query.order_by(column.asc())
 
     return query.offset(skip).limit(limit).all()
+
+def get_similar_products(db: Session, product):
+    return db.query(Product).filter(
+        Product.category_id == product.category_id,
+        Product.id != product.id
+    ).all()
+
+def get_cheap_products(db: Session, limit: int = 5):
+    return db.query(Product).order_by(Product.price.asc()).limit(limit).all()
+
+def get_expensive_products(db: Session, limit: int = 5):
+    return db.query(Product).order_by(Product.price.desc()).limit(limit).all()
+
+def get_out_of_stock_products(db: Session):
+    return db.query(Product).filter(Product.stock == 0).all()
+
+def get_low_stock_products(db: Session, max_stock: int = 5):
+    return db.query(Product).filter(Product.stock < max_stock).order_by(Product.stock.asc()).all()

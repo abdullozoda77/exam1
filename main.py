@@ -128,3 +128,24 @@ def products_list(
         skip=skip,
         limit=page_size
     )
+
+@app.get('/products/{product_id}/similar/', response_model=list[ProductRead])
+def products_similar(product_id: int, db: Session = Depends(get_db)):
+    product = product_or_404(db, product_id)
+    return get_similar_products(db, product)
+
+@app.get('/products/price/cheap/', response_model=list[ProductRead])
+def products_cheap(limit: int = Query(5, ge=1, le=50), db: Session = Depends(get_db)):
+    return get_cheap_products(db, limit)
+
+@app.get('/products/price/expensive/', response_model=list[ProductRead])
+def products_expensive(limit: int = Query(5, ge=1, le=50), db: Session = Depends(get_db)):
+    return get_expensive_products(db, limit)
+
+@app.get('/products/stock/out/', response_model=list[ProductRead])
+def products_out_of_stock(db: Session = Depends(get_db)):
+    return get_out_of_stock_products(db)
+
+@app.get('/products/stock/low/', response_model=list[ProductRead])
+def products_low_stock(db: Session = Depends(get_db)):
+    return get_low_stock_products(db)
