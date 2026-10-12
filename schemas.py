@@ -110,3 +110,27 @@ class OrderRead(BaseModel):
     total_price: float
     created_at: datetime
     items: list[OrderItemRead]
+
+class ReviewCreate(BaseModel):
+    user_id: int
+    rating: int = Field(ge=1, le=5)
+    text: str = ''
+
+class ReviewRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    product_id: int
+    rating: int
+    text: str
+    created_at: datetime
+
+class FavoriteCreate(BaseModel):
+    user_id: int
+    product_id: int
+
+class FavoriteRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    product: ProductShort
