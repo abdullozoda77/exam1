@@ -215,3 +215,25 @@ def clear_cart(db: Session, user_id: int):
     count = db.query(CartItem).filter(CartItem.user_id == user_id).delete()
     db.commit()
     return count
+
+def create_order(db: Session, user_id: int):
+    items = get_cart_items(db, user_id)
+    order = Order(user_id=user_id, status='new', total_price=0)
+    total = 0
+
+    for item in items:
+        order.items.append(OrderItem(
+            product_id=item.product_id,
+            product_name=item.product.name,
+            price=item.product.price,
+            quantity=item.quantity
+        ))
+        item.product.stock -= item.quantity
+        total += item.product.price * item.quantity
+        db.delete(item)
+
+    order.total_price = round(total, 2)
+    db.add(order)
+    db.commit()
+    db.refresh(order)
+    return order

@@ -196,3 +196,17 @@ def cart_clear(user_id: int, db: Session = Depends(get_db)):
     user_or_404(db, user_id)
     count = clear_cart(db, user_id)
     return {'user_id': user_id, 'deleted_items': count}
+
+@app.post('/orders/create/', response_model=OrderRead)
+def order_create(data: OrderCreate, db: Session = Depends(get_db)):
+    user_or_404(db, data.user_id)
+    items = get_cart_items(db, data.user_id)
+
+    if not items:
+        raise HTTPException(status_code=400, detail='The cart is empty')
+
+    for item in items:
+        if item.quantity > item.product.stock:
+            raise HTTPException(status_code=400, detail=f'Only {item.product.stock} of «{item.product.name}» in stock')
+
+    return create_order(db, data.user_id)
