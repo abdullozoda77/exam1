@@ -465,3 +465,43 @@ def delete_favorite(db: Session, favorite):
     db.delete(favorite)
     db.commit()
     return favorite
+
+def get_statistics(db: Session):
+    active = Order.status != 'cancelled'
+
+    total_sum = db.query(func.sum(Order.total_price)).filter(active).scalar() or 0
+    paid_orders = db.query(Order).filter(active).count()
+
+    best = db.query(
+        OrderItem.product_name,
+        func.sum(OrderItem.quantity).label('sold')
+    ).join(Order, OrderItem.order_id == Order.id).filter(active).group_by(
+        OrderItem.product_name
+    ).order_by(func.sum(OrderItem.quantity).desc()).first()
+
+    top_user = db.query(
+        User.id,
+        User.name,
+        func.sum(Order.total_price).label('spent')
+    ).join(Order, Order.user_id == User.id).filter(active).group_by(
+        User.id, User.name
+    ).order_by(func.sum(Order.total_price).desc()).first()
+
+    most_expensive = db.query(Product).order_by(Product.price.desc()).first()
+    cheapest = db.query(Product).order_by(Product.price.asc()).first()
+
+    return {
+        'users_count': db.query(User).count(),
+        'products_count': db.query(Product).count(),
+        'categories_count': db.query(Category).count(),
+        'orders_count': db.query(Order).count(),
+        'total_orders_sum': round(total_sum, 2),
+        'average_order_sum': round(total_sum / paid_orders, 2) if paid_orders else 0,
+        'best_selling_product': {'name': best[0], 'sold': best[1]} if best else None,
+        'most_expensive_product': {'id': most_expensive.id, 'name': most_expensive.name, 'price': most_expensive.price} if most_expensive else None,
+        'cheapest_product': {'id': cheapest.id, 'name': cheapest.name, 'price': cheapest.price} if cheapest else None,
+        'low_stock_products': [
+            {'id': p.id, 'name': p.name, 'stock': p.stock} for p in get_low_stock_products(db)
+        ],
+        'top_user': {'id': top_user[0], 'name': top_user[1], 'spent': round(top_user[2], 2)} if top_user else None
+    }

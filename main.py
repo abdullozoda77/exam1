@@ -371,3 +371,7 @@ def favorite_delete(user_id: int, product_id: int, db: Session = Depends(get_db)
     if not favorite:
         raise HTTPException(status_code=404, detail='This product is not in favorites')
     return delete_favorite(db, favorite)
+
+@app.get('/statistics/')
+def statistics(db: Session = Depends(get_db)):
+    return get_statistics(db)
