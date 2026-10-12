@@ -43,3 +43,29 @@ class CartItem(Base):
     @property
     def subtotal(self):
         return round(self.product.price * self.quantity, 2)
+
+class Order(Base):
+    __tablename__ = 'orders'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    status: Mapped[str] = mapped_column(String(20), default='new')
+    total_price: Mapped[float] = mapped_column(Float, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    user: Mapped['User'] = relationship()
+    items: Mapped[list['OrderItem']] = relationship(cascade='all, delete-orphan')
+
+class OrderItem(Base):
+    __tablename__ = 'order_items'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey('orders.id'))
+    product_id: Mapped[int | None] = mapped_column(ForeignKey('products.id'), nullable=True)
+    product_name: Mapped[str] = mapped_column(String(150))
+    price: Mapped[float] = mapped_column(Float)
+    quantity: Mapped[int] = mapped_column(Integer)
+
+    @property
+    def subtotal(self):
+        return round(self.price * self.quantity, 2)
