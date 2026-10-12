@@ -68,3 +68,15 @@ def category_update(category_id: int, data: CategoryCreate, db: Session = Depend
     if other and other.id != category_id:
         raise HTTPException(status_code=400, detail='This category already exists')
     return update_category(db, category_id, data)
+
+@app.get('/categories/{category_id}/products/', response_model=list[ProductRead])
+def category_products(category_id: int, db: Session = Depends(get_db)):
+    category_or_404(db, category_id)
+    return get_category_products(db, category_id)
+
+@app.delete('/categories/{category_id}', response_model=CategoryRead)
+def category_delete(category_id: int, db: Session = Depends(get_db)):
+    category_or_404(db, category_id)
+    if get_category_products(db, category_id):
+        raise HTTPException(status_code=400, detail='This category has products, it can not be deleted')
+    return delete_category(db, category_id)

@@ -60,3 +60,14 @@ def update_category(db: Session, pk: int, data):
     db.commit()
     db.refresh(category)
     return category
+
+def get_category_products(db: Session, category_id: int):
+    return db.query(Product).filter(Product.category_id == category_id).all()
+
+def delete_category(db: Session, pk: int):
+    category = get_category(db, pk)
+    if not category:
+        return None
+    db.delete(category)
+    db.commit()
+    return category
