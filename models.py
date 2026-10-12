@@ -28,3 +28,18 @@ class Product(Base):
     category_id: Mapped[int] = mapped_column(ForeignKey('categories.id'))
 
     category: Mapped['Category'] = relationship()
+
+class CartItem(Base):
+    __tablename__ = 'cart_items'
+    __table_args__ = (UniqueConstraint('user_id', 'product_id'),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    product_id: Mapped[int] = mapped_column(ForeignKey('products.id'))
+    quantity: Mapped[int] = mapped_column(Integer, default=1)
+
+    product: Mapped['Product'] = relationship()
+
+    @property
+    def subtotal(self):
+        return round(self.product.price * self.quantity, 2)
