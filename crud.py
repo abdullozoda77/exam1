@@ -429,3 +429,17 @@ def get_product_rating(db: Session, product_id: int):
         'average_rating': round(row[0], 2) if row[0] else 0,
         'reviews_count': row[1]
     }
+
+def get_products_by_rating(db: Session, high: bool = True):
+    average = func.avg(Review.rating)
+    query = db.query(Product, average).join(Review, Review.product_id == Product.id).group_by(Product.id)
+
+    if high:
+        query = query.having(average >= 4).order_by(average.desc())
+    else:
+        query = query.having(average < 3).order_by(average.asc())
+
+    return [
+        {'id': product.id, 'name': product.name, 'price': product.price, 'average_rating': round(avg, 2)}
+        for product, avg in query.all()
+    ]

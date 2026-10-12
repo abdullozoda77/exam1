@@ -335,3 +335,11 @@ def review_delete(review_id: int, db: Session = Depends(get_db)):
     if not review:
         raise HTTPException(status_code=404, detail='Review not found')
     return review
+
+@app.get('/products/rating/high/')
+def products_high_rating(db: Session = Depends(get_db)):
+    return get_products_by_rating(db, high=True)
+
+@app.get('/products/rating/low/')
+def products_low_rating(db: Session = Depends(get_db)):
+    return get_products_by_rating(db, high=False)
