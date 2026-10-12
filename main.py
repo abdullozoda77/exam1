@@ -247,3 +247,17 @@ def order_cancel(order_id: int, db: Session = Depends(get_db)):
     if order.status == 'cancelled':
         raise HTTPException(status_code=400, detail='This order is already cancelled')
     return cancel_order(db, order)
+
+@app.delete('/products/{product_id}', response_model=ProductRead)
+def product_delete(product_id: int, db: Session = Depends(get_db)):
+    product_or_404(db, product_id)
+    if product_in_active_order(db, product_id):
+        raise HTTPException(status_code=400, detail='This product is in an active order, it can not be deleted')
+    return delete_product(db, product_id)
+
+@app.delete('/users/{user_id}', response_model=UserRead)
+def user_delete(user_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    if user_has_orders(db, user_id):
+        raise HTTPException(status_code=400, detail='This user has orders, it can not be deleted')
+    return delete_user(db, user_id)

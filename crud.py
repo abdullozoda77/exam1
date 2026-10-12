@@ -290,3 +290,37 @@ def update_order_status(db: Session, order, status: str):
     db.commit()
     db.refresh(order)
     return order
+
+def product_in_active_order(db: Session, product_id: int):
+    item = db.query(OrderItem).join(Order, OrderItem.order_id == Order.id).filter(
+        OrderItem.product_id == product_id,
+        Order.status.in_(['new', 'paid'])
+    ).first()
+    return item is not None
+
+def delete_product(db: Session, pk: int):
+    product = get_product(db, pk)
+    if not product:
+        return None
+    product.category
+    db.query(OrderItem).filter(OrderItem.product_id == pk).update({'product_id': None})
+    db.query(CartItem).filter(CartItem.product_id == pk).delete()
+    db.query(Favorite).filter(Favorite.product_id == pk).delete()
+    db.query(Review).filter(Review.product_id == pk).delete()
+    db.delete(product)
+    db.commit()
+    return product
+
+def user_has_orders(db: Session, user_id: int):
+    return db.query(Order).filter(Order.user_id == user_id).first() is not None
+
+def delete_user(db: Session, pk: int):
+    user = get_user(db, pk)
+    if not user:
+        return None
+    db.query(CartItem).filter(CartItem.user_id == pk).delete()
+    db.query(Favorite).filter(Favorite.user_id == pk).delete()
+    db.query(Review).filter(Review.user_id == pk).delete()
+    db.delete(user)
+    db.commit()
+    return user
