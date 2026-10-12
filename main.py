@@ -307,3 +307,8 @@ def user_products(user_id: int, db: Session = Depends(get_db)):
 def user_product_count(user_id: int, product_id: int, db: Session = Depends(get_db)):
     user_or_404(db, user_id)
     return get_user_product_count(db, user_id, product_id)
+
+@app.get('/users/{user_id}/statistics/')
+def user_statistics(user_id: int, db: Session = Depends(get_db)):
+    user_or_404(db, user_id)
+    return get_user_statistics(db, user_id)

@@ -379,3 +379,24 @@ def get_user_product_count(db: Session, user_id: int, product_id: int):
         'times_bought': rows[0] or 0,
         'total_quantity': rows[1] or 0
     }
+
+def get_user_statistics(db: Session, user_id: int):
+    purchases = get_user_purchases(db, user_id)
+    total_spent = get_user_total_spent(db, user_id)
+    cart = get_cart(db, user_id)
+    last_order = get_last_order(db, user_id)
+
+    return {
+        'user_id': user_id,
+        'orders_count': db.query(Order).filter(Order.user_id == user_id).count(),
+        'purchases_count': len(purchases),
+        'cancelled_count': db.query(Order).filter(Order.user_id == user_id, Order.status == 'cancelled').count(),
+        'total_spent': total_spent,
+        'average_order': round(total_spent / len(purchases), 2) if purchases else 0,
+        'products_bought': sum(item['total_quantity'] for item in get_user_purchased_products(db, user_id)),
+        'last_order_date': last_order.created_at if last_order else None,
+        'cart_items': cart['total_quantity'],
+        'cart_total': cart['total_price'],
+        'favorites_count': db.query(Favorite).filter(Favorite.user_id == user_id).count(),
+        'reviews_count': db.query(Review).filter(Review.user_id == user_id).count()
+    }
