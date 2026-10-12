@@ -149,3 +149,18 @@ def products_out_of_stock(db: Session = Depends(get_db)):
 @app.get('/products/stock/low/', response_model=list[ProductRead])
 def products_low_stock(db: Session = Depends(get_db)):
     return get_low_stock_products(db)
+
+@app.post('/cart/add/', response_model=CartItemRead)
+def cart_add(data: CartAdd, db: Session = Depends(get_db)):
+    user_or_404(db, data.user_id)
+    product = product_or_404(db, data.product_id)
+
+    if product.stock == 0:
+        raise HTTPException(status_code=400, detail=f'«{product.name}» is out of stock')
+
+    item = get_cart_item(db, data.user_id, data.product_id)
+    in_cart = item.quantity if item else 0
+    if in_cart + data.quantity > product.stock:
+        raise HTTPException(status_code=400, detail=f'Only {product.stock} of «{product.name}» in stock, you already have {in_cart} in the cart')
+
+    return add_to_cart(db, data)

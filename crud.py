@@ -160,3 +160,20 @@ def get_out_of_stock_products(db: Session):
 
 def get_low_stock_products(db: Session, max_stock: int = 5):
     return db.query(Product).filter(Product.stock < max_stock).order_by(Product.stock.asc()).all()
+
+def get_cart_item(db: Session, user_id: int, product_id: int):
+    return db.query(CartItem).filter(
+        CartItem.user_id == user_id,
+        CartItem.product_id == product_id
+    ).first()
+
+def add_to_cart(db: Session, data):
+    item = get_cart_item(db, data.user_id, data.product_id)
+    if item:
+        item.quantity += data.quantity
+    else:
+        item = CartItem(**data.model_dump())
+        db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
