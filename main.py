@@ -101,3 +101,30 @@ def product_update(product_id: int, data: ProductCreate, db: Session = Depends(g
     product_or_404(db, product_id)
     category_or_404(db, data.category_id)
     return update_product(db, product_id, data)
+
+@app.get('/products/', response_model=list[ProductRead])
+def products_list(
+    search: str | None = Query(None, min_length=1),
+    category_id: int | None = Query(None, ge=1),
+    min_price: float | None = Query(None, gt=0),
+    max_price: float | None = Query(None, gt=0),
+    in_stock: bool | None = None,
+    sort_by: Literal['id', 'name', 'price', 'stock'] = 'id',
+    order: Literal['asc', 'desc'] = 'asc',
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    skip = (page - 1) * page_size
+    return get_products(
+        db=db,
+        search=search,
+        category_id=category_id,
+        min_price=min_price,
+        max_price=max_price,
+        in_stock=in_stock,
+        sort_by=sort_by,
+        order=order,
+        skip=skip,
+        limit=page_size
+    )

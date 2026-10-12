@@ -94,3 +94,51 @@ def update_product(db: Session, pk: int, data):
     db.commit()
     db.refresh(product)
     return product
+
+def get_products(
+    db: Session,
+    search: str | None = None,
+    category_id: int | None = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
+    in_stock: bool | None = None,
+    sort_by: str = 'id',
+    order: str = 'asc',
+    skip: int = 0,
+    limit: int = 10
+):
+    query = db.query(Product)
+
+    if search is not None:
+        query = query.filter(Product.name.contains(search))
+
+    if category_id is not None:
+        query = query.filter(Product.category_id == category_id)
+
+    if min_price is not None:
+        query = query.filter(Product.price >= min_price)
+
+    if max_price is not None:
+        query = query.filter(Product.price <= max_price)
+
+    if in_stock is True:
+        query = query.filter(Product.stock > 0)
+
+    if in_stock is False:
+        query = query.filter(Product.stock == 0)
+
+    sort_columns = {
+        'id': Product.id,
+        'name': Product.name,
+        'price': Product.price,
+        'stock': Product.stock
+    }
+
+    column = sort_columns.get(sort_by, Product.id)
+
+    if order == 'desc':
+        query = query.order_by(column.desc())
+    else:
+        query = query.order_by(column.asc())
+
+    return query.offset(skip).limit(limit).all()
