@@ -71,3 +71,26 @@ def delete_category(db: Session, pk: int):
     db.delete(category)
     db.commit()
     return category
+
+def get_product(db: Session, pk: int):
+    return db.query(Product).filter(Product.id == pk).first()
+
+def create_product(db: Session, data):
+    product = Product(**data.model_dump())
+    db.add(product)
+    db.commit()
+    db.refresh(product)
+    return product
+
+def update_product(db: Session, pk: int, data):
+    product = get_product(db, pk)
+    if not product:
+        return None
+    product.name = data.name
+    product.description = data.description
+    product.price = data.price
+    product.stock = data.stock
+    product.category_id = data.category_id
+    db.commit()
+    db.refresh(product)
+    return product

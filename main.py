@@ -80,3 +80,24 @@ def category_delete(category_id: int, db: Session = Depends(get_db)):
     if get_category_products(db, category_id):
         raise HTTPException(status_code=400, detail='This category has products, it can not be deleted')
     return delete_category(db, category_id)
+
+def product_or_404(db, product_id):
+    product = get_product(db, product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail=f'Product #{product_id} not found')
+    return product
+
+@app.post('/products/', response_model=ProductRead)
+def product_create(data: ProductCreate, db: Session = Depends(get_db)):
+    category_or_404(db, data.category_id)
+    return create_product(db, data)
+
+@app.get('/products/{product_id}', response_model=ProductRead)
+def product_detail(product_id: int, db: Session = Depends(get_db)):
+    return product_or_404(db, product_id)
+
+@app.put('/products/{product_id}', response_model=ProductRead)
+def product_update(product_id: int, data: ProductCreate, db: Session = Depends(get_db)):
+    product_or_404(db, product_id)
+    category_or_404(db, data.category_id)
+    return update_product(db, product_id, data)
