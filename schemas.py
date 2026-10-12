@@ -41,3 +41,27 @@ class CategoryCreate(BaseModel):
 class CategoryRead(CategoryCreate):
     model_config = ConfigDict(from_attributes=True)
     id: int
+
+class ProductCreate(BaseModel):
+    name: str
+    description: str = ''
+    price: float = Field(gt=0)
+    stock: int = Field(ge=0)
+    category_id: int
+
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, value):
+        return check_text(value)
+
+class ProductRead(ProductCreate):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    category: CategoryRead
+
+class ProductShort(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    price: float
+    stock: int
