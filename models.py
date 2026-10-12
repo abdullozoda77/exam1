@@ -69,3 +69,25 @@ class OrderItem(Base):
     @property
     def subtotal(self):
         return round(self.price * self.quantity, 2)
+
+class Review(Base):
+    __tablename__ = 'reviews'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    product_id: Mapped[int] = mapped_column(ForeignKey('products.id'))
+    rating: Mapped[int] = mapped_column(Integer)
+    text: Mapped[str] = mapped_column(Text, default='')
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    user: Mapped['User'] = relationship()
+
+class Favorite(Base):
+    __tablename__ = 'favorites'
+    __table_args__ = (UniqueConstraint('user_id', 'product_id'),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    product_id: Mapped[int] = mapped_column(ForeignKey('products.id'))
+
+    product: Mapped['Product'] = relationship()
