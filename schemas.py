@@ -10,13 +10,23 @@ def check_text(value):
 
 class UserCreate(BaseModel):
     name: str
+    username: str
     email: str
     phone: str = ''
+    password: str = Field(min_length=4)
 
     @field_validator('name')
     @classmethod
     def validate_name(cls, value):
         return check_text(value)
+
+    @field_validator('username')
+    @classmethod
+    def validate_username(cls, value):
+        value = value.strip().lower()
+        if len(value) < 3 or ' ' in value:
+            raise ValueError('Username must be at least 3 characters, without spaces')
+        return value
 
     @field_validator('email')
     @classmethod
@@ -26,9 +36,22 @@ class UserCreate(BaseModel):
             raise ValueError('Email is not correct')
         return value
 
-class UserRead(UserCreate):
+class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    name: str
+    username: str
+    email: str
+    phone: str
+    is_active: bool
+
+class LoginSchema(BaseModel):
+    username: str
+    password: str
+
+class TokenSchema(BaseModel):
+    access_token: str
+    token_type: str
 
 class CategoryCreate(BaseModel):
     name: str

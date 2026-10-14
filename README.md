@@ -1,6 +1,6 @@
 # Internet Shop API
 
-Backend интернет-магазина на **FastAPI + SQLAlchemy + SQLite**. Без авторизации: `user_id` передаётся вручную.
+Backend интернет-магазина на **FastAPI + SQLAlchemy + SQLite** с регистрацией и входом через **JWT**.
 
 ## Запуск
 
@@ -19,6 +19,7 @@ uvicorn main:app --reload
 | Файл | Что внутри |
 |---|---|
 | `database.py` | подключение к SQLite, `get_db()` |
+| `auth.py` | хеширование паролей, создание и проверка JWT token |
 | `models.py` | таблицы: User, Category, Product, CartItem, Order, OrderItem, Review, Favorite |
 | `schemas.py` | что API принимает и отдаёт + валидация |
 | `crud.py` | вся логика работы с базой |
@@ -34,6 +35,28 @@ User ──< Order ──< OrderItem >── Product
 User ──< Review >── Product
 User ──< Favorite >── Product
 ```
+
+## Авторизация (JWT)
+
+| Метод | Путь | Что делает |
+|---|---|---|
+| POST | `/register` | регистрация `{name, username, email, phone, password}` |
+| POST | `/login` | вход `{username, password}` → `access_token` |
+| GET | `/me` | текущий пользователь (нужен token) |
+
+1. `POST /register` — пароль сохраняется только как хеш (`password_hash`, bcrypt).
+2. `POST /login` — проверяет username и пароль, возвращает JWT token (живёт 30 минут).
+3. В Swagger кнопка **Authorize** → в поле `Authorization` вставить `Bearer <token>`.
+4. `GET /me` — `get_current_user` проверяет token и возвращает пользователя.
+
+Пользователи из `seed.py`: `rustam`, `malika`, `daler`, пароль у всех `12345`.
+
+| Ошибка | Причина |
+|---|---|
+| `Authorization header missing` | header не передан |
+| `Invalid authorization format` | token без слова `Bearer` |
+| `Invalid token` | token истёк, повреждён или создан с другим `SECRET_KEY` |
+| `Invalid username or password` | неверный username или пароль |
 
 ## Endpoints
 

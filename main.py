@@ -4,12 +4,14 @@ from sqlalchemy.orm import Session
 from database import get_db, engine, Base
 from schemas import *
 from crud import *
+from auth import verify_password, create_access_token, get_current_user
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title='Internet Shop API',
     openapi_tags=[
+        {'name': 'Auth'},
         {'name': 'Users'},
         {'name': 'Categories'},
         {'name': 'Products'},
@@ -28,10 +30,37 @@ def user_or_404(db, user_id):
         raise HTTPException(status_code=404, detail=f'User #{user_id} not found')
     return user
 
+def check_new_user(db, data, user_id=None):
+    other = get_user_by_username(db, data.username)
+    if other and other.id != user_id:
+        raise HTTPException(status_code=400, detail='Username already exists')
+    other = get_user_by_email(db, data.email)
+    if other and other.id != user_id:
+        raise HTTPException(status_code=400, detail='Email already exists')
+
+@app.post('/register', tags=['Auth'], response_model=UserRead)
+def register(data: UserCreate, db: Session = Depends(get_db)):
+    check_new_user(db, data)
+    return create_user(db, data)
+
+@app.post('/login', tags=['Auth'], response_model=TokenSchema)
+def login(data: LoginSchema, db: Session = Depends(get_db)):
+    user = get_user_by_username(db, data.username.strip().lower())
+
+    if user is None or not verify_password(data.password, user.password_hash):
+        raise HTTPException(status_code=401, detail='Invalid username or password')
+
+    access_token = create_access_token(data={'user_id': user.id})
+
+    return {'access_token': access_token, 'token_type': 'bearer'}
+
+@app.get('/me', tags=['Auth'], response_model=UserRead)
+def me(current_user: User = Depends(get_current_user)):
+    return current_user
+
 @app.post('/users/', tags=['Users'], response_model=UserRead)
 def user_create(data: UserCreate, db: Session = Depends(get_db)):
-    if get_user_by_email(db, data.email):
-        raise HTTPException(status_code=400, detail='This email is already used')
+    check_new_user(db, data)
     return create_user(db, data)
 
 @app.get('/users/', tags=['Users'], response_model=list[UserRead])
@@ -45,9 +74,7 @@ def user_detail(user_id: int, db: Session = Depends(get_db)):
 @app.put('/users/{user_id}', tags=['Users'], response_model=UserRead)
 def user_update(user_id: int, data: UserCreate, db: Session = Depends(get_db)):
     user_or_404(db, user_id)
-    other = get_user_by_email(db, data.email)
-    if other and other.id != user_id:
-        raise HTTPException(status_code=400, detail='This email is already used')
+    check_new_user(db, data, user_id)
     return update_user(db, user_id, data)
 
 def category_or_404(db, category_id):

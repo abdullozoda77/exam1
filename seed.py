@@ -1,6 +1,7 @@
 from database import SessionLocal, engine, Base
 from models import User, Category, Product, CartItem, Review, Favorite
 from crud import create_order
+from auth import hash_password
 
 Base.metadata.create_all(bind=engine)
 
@@ -21,9 +22,9 @@ PRODUCTS = [
 ]
 
 USERS = [
-    ('Rustam Ahmadov', 'rustam@mail.tj', '+992 900 11 22 33'),
-    ('Malika Yusupova', 'malika@mail.tj', '+992 918 22 33 44'),
-    ('Daler Sharipov', 'daler@mail.tj', '+992 935 33 44 55'),
+    ('Rustam Ahmadov', 'rustam', 'rustam@mail.tj', '+992 900 11 22 33'),
+    ('Malika Yusupova', 'malika', 'malika@mail.tj', '+992 918 22 33 44'),
+    ('Daler Sharipov', 'daler', 'daler@mail.tj', '+992 935 33 44 55'),
 ]
 
 CARTS = [
@@ -65,8 +66,9 @@ else:
     db.commit()
 
     users = {}
-    for name, email, phone in USERS:
-        users[email] = User(name=name, email=email, phone=phone)
+    for name, username, email, phone in USERS:
+        users[email] = User(name=name, username=username, email=email, phone=phone,
+                            password_hash=hash_password('12345'))
         db.add(users[email])
     db.commit()
 
